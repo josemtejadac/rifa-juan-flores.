@@ -132,7 +132,7 @@ export default function Home() {
       });
     } else {
       setAviso({
-        texto: `Listo, ${nombre.trim()}. Reservaste ${libres.map(pad).join(", ")} (${clp(libres.length * PRICE)}). Coordina el pago con Juan Flores para confirmar.`,
+        texto: `Listo, ${nombre.trim()}. Reservaste ${libres.map(pad).join(", ")} (${clp(libres.length * PRICE)}). Coordina el pago con el encargado.`,
         tipo: "good",
       });
     }
@@ -275,7 +275,7 @@ export default function Home() {
                 Volver
               </button>
             </div>
-            <p className="sub">Después de reservar, coordina el pago con Juan Flores para confirmar tus números.</p>
+            <p className="sub">Después de reservar, coordina el pago con el encargado.</p>
           </section>
         )}
 
