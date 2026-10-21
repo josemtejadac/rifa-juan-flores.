@@ -81,8 +81,10 @@ export async function GET() {
   try {
     const { estado } = await leer();
     return json({ ocupados: ocupados(estado) });
-  } catch {
-    return json({ error: "No se pudo leer la rifa" }, 500);
+  } catch (e) {
+    console.error("rifa GET", e);
+    const detalle = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    return json({ error: "No se pudo leer la rifa", detalle }, 500);
   }
 }
 
