@@ -1,4 +1,4 @@
-import { BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { BlobNotFoundError, BlobPreconditionFailedError, get, head, put } from "@vercel/blob";
 
 export const dynamic = "force-dynamic";
 
@@ -24,17 +24,27 @@ function json(body: unknown, status = 200) {
 }
 
 async function leer(): Promise<{ estado: Estado; etag: string | null }> {
+  // La huella de versión se toma con head(): es el mismo formato que exige put({ ifMatch }).
+  // Se lee antes del contenido; si alguien guarda en medio, el guardado falla y se reintenta.
+  let etag: string | null = null;
+  try {
+    const meta = await head(PATH);
+    etag = meta.etag;
+  } catch (e) {
+    if (e instanceof BlobNotFoundError) return { estado: { compras: [] }, etag: null };
+    throw e;
+  }
   const r = await get(PATH, { access: "private", useCache: false });
-  if (!r || r.statusCode !== 200) return { estado: { compras: [] }, etag: null };
+  if (!r || r.statusCode !== 200) return { estado: { compras: [] }, etag };
   const texto = await new Response(r.stream).text();
   try {
     const parsed = JSON.parse(texto) as Estado;
     return {
       estado: { compras: Array.isArray(parsed.compras) ? parsed.compras : [] },
-      etag: r.blob.etag,
+      etag,
     };
   } catch {
-    return { estado: { compras: [] }, etag: r.blob.etag };
+    return { estado: { compras: [] }, etag };
   }
 }
 
@@ -169,7 +179,9 @@ export async function POST(request: Request) {
     }
 
     return json({ error: "Acción desconocida" }, 400);
-  } catch {
-    return json({ error: "No se pudo guardar. Intenta de nuevo." }, 500);
+  } catch (e) {
+    console.error("rifa POST", e);
+    const detalle = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    return json({ error: "No se pudo guardar. Intenta de nuevo.", detalle }, 500);
   }
 }

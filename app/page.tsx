@@ -106,7 +106,10 @@ export default function Home() {
     const r = await llamar({ action: "reservar", nums: elegidos, nombre, telefono });
     setEnviando(false);
     if (!r.ok) {
-      setAviso({ texto: r.data.error ?? "No se pudo reservar. Intenta de nuevo.", tipo: "err" });
+      setAviso({
+        texto: (r.data.error ?? "No se pudo reservar. Intenta de nuevo.") + (r.data.detalle ? ` (${r.data.detalle})` : ""),
+        tipo: "err",
+      });
       return;
     }
     const libres: number[] = r.data.libres ?? [];
