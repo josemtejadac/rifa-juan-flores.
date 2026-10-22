@@ -37,6 +37,8 @@ export default function Home() {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [pago, setPago] = useState<{ nombre: string; nums: number[] } | null>(null);
+  const [copiado, setCopiado] = useState(false);
 
   const [verLogin, setVerLogin] = useState(false);
   const [user, setUser] = useState("");
@@ -123,6 +125,10 @@ export default function Home() {
     }
     setSel([]);
     setVerForm(false);
+    if (libres.length) {
+      setPago({ nombre: nombre.trim(), nums: [...libres].sort((a, b) => a - b) });
+      setTimeout(() => document.getElementById("pago")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    }
     if (fallidos.length && libres.length) {
       setAviso({
         texto: `Reservaste ${libres.map(pad).join(", ")}. Estos ya estaban tomados: ${fallidos.map(pad).join(", ")}.`,
@@ -135,7 +141,7 @@ export default function Home() {
       });
     } else {
       setAviso({
-        texto: `Listo, ${nombre.trim()}. Reservaste ${libres.map(pad).join(", ")} (${clp(libres.length * PRICE)}). Coordina el pago con el encargado.`,
+        texto: `Listo, ${nombre.trim()}. Reservaste ${libres.map(pad).join(", ")} (${clp(libres.length * PRICE)}). Transfiere el valor y envía el comprobante por WhatsApp.`,
         tipo: "good",
       });
     }
@@ -241,6 +247,54 @@ export default function Home() {
           </span>
         </p>
 
+        <section className="sheet" id="pago" aria-label="Datos para pagar">
+          <h2>Cómo pagar</h2>
+          {pago ? (
+            <p className="sub">
+              <b>{pago.nombre}</b>, reservaste {pago.nums.map(pad).join(", ")}. Transfiere{" "}
+              <b>{clp(pago.nums.length * PRICE)}</b> a esta cuenta.
+            </p>
+          ) : (
+            <p className="sub">Transfiere el valor de tus números ($4.000 cada uno) a esta cuenta.</p>
+          )}
+          <dl className="datos">
+            <div><dt>Nombre</dt><dd>Wilfredo Alexander Escalona Ochoa</dd></div>
+            <div><dt>RUT</dt><dd>26.122.636-7</dd></div>
+            <div><dt>Banco</dt><dd>Mercado Pago</dd></div>
+            <div><dt>Tipo de cuenta</dt><dd>Cuenta Vista</dd></div>
+            <div><dt>N° de cuenta</dt><dd>1050906083</dd></div>
+            <div><dt>Correo</dt><dd>escalonaalexander92@gmail.com</dd></div>
+          </dl>
+          <div className="row">
+            <button
+              className="ghost"
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText("1050906083");
+                  setCopiado(true);
+                  setTimeout(() => setCopiado(false), 2000);
+                } catch {}
+              }}
+            >
+              {copiado ? "Copiado" : "Copiar N° de cuenta"}
+            </button>
+          </div>
+          <a
+            className="btn wsp"
+            target="_blank"
+            rel="noopener noreferrer"
+            href={`https://wa.me/56957604999?text=${encodeURIComponent(
+              pago
+                ? `Hola, soy ${pago.nombre}. Reservé los números ${pago.nums.map(pad).join(", ")} de la rifa (${clp(pago.nums.length * PRICE)}). Te envío el comprobante de la transferencia.`
+                : "Hola, te envío el comprobante de la transferencia de mi número de la rifa.",
+            )}`}
+          >
+            Enviar comprobante por WhatsApp
+          </a>
+          <p className="sub">Envía la captura de la transferencia al +56 9 5760 4999.</p>
+        </section>
+
         {verForm && (
           <section className="sheet">
             <h2>Confirmar números</h2>
@@ -278,7 +332,7 @@ export default function Home() {
                 Volver
               </button>
             </div>
-            <p className="sub">Después de reservar, coordina el pago con el encargado.</p>
+            <p className="sub">Después de reservar verás los datos para transferir.</p>
           </section>
         )}
 
